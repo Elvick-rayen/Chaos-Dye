@@ -16,7 +16,7 @@ const BUSINESS = {
 
   // WhatsApp number in international format, digits only, no + or spaces.
   // Example: Lebanon number +961 71 234 567 -> "96171234567"
-  whatsappNumber: "96170000000",         // <-- CHANGE THIS TO YOUR REAL NUMBER
+  whatsappNumber: "96171224334",         // <-- CHANGE THIS TO YOUR REAL NUMBER
 
   instagramHandle: "@yourbrand",         // <-- replace
   instagramUrl: "https://instagram.com/yourbrand", // <-- replace
