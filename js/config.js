@@ -88,19 +88,19 @@ const DESIGNS = [
   {
     id: "spiral",
     name: "Spiral",
-    image: "assets/designs/spiral.svg",
+    image: "assets/designs/spiral.png",
     description: "Classic spiral tie-dye design."
   },
   {
     id: "scrunch",
     name: "Scrunch",
-    image: "assets/designs/scrunch.svg",
+    image: "assets/designs/scrunch.png",
     description: "Random, crumpled cloud-style pattern."
   },
   {
     id: "symmetrical",
     name: "Symmetrical / Mirror Fold",
-    image: "assets/designs/symmetrical.svg",
+    image: "assets/designs/symetrical.png",
     description: "Folded technique with a mirrored pattern."
   }
 ];
