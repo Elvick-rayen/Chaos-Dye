@@ -10,8 +10,8 @@
    Change your brand name, logo, phone number and socials here.
 --------------------------------------------------------- */
 const BUSINESS = {
-  name: "TIE-DYE BRAND",                 // <-- replace with your real brand name
-  tagline: "Hand-dyed, one at a time.",
+  name: "CHAOS DYE",                 // <-- replace with your real brand name
+  tagline: "Dye Never Dies.",
   logo: "assets/logo/logo-placeholder.svg", // <-- replace with your real logo file
 
   // WhatsApp number in international format, digits only, no + or spaces.
