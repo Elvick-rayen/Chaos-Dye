@@ -183,8 +183,8 @@ p { margin: 0; }
 }
 
 .brand__logo {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   flex: none;
 }
 
@@ -223,7 +223,7 @@ p { margin: 0; }
 
 @media (min-width: 768px) {
   :root { --header-h: 72px; --gutter: 28px; }
-  .brand__logo { width: 40px; height: 40px; }
+  .brand__logo { width: 46px; height: 46px; }
   .brand__name { font-size: 1.3rem; }
   .main-nav a { padding: 8px 18px; font-size: 0.95rem; }
   .main-nav a:not(.is-active):hover { color: var(--ink); }
@@ -913,6 +913,12 @@ p { margin: 0; }
   padding: 44px 0 calc(96px + var(--safe-bottom));
 }
 
+.footer-logo {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 16px;
+}
+
 .footer-wordmark {
   font-family: var(--font-display);
   font-weight: 800;
@@ -933,19 +939,18 @@ p { margin: 0; }
   margin: 28px 0 0;
   padding: 0;
   display: grid;
-  gap: 2px;
+  gap: 10px;
 }
 
-.footer-contact a,
-.footer-contact li > span {
+.footer-contact li > span,
+.footer-contact li > a:not(.contact-btn) {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--line);
-  text-decoration: none;
+  padding: 14px 4px;
   font-weight: 600;
+  text-decoration: none;
 }
 
 .footer-contact small {
@@ -954,6 +959,57 @@ p { margin: 0; }
   color: var(--ink-faint);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+/* Big tappable contact buttons in the footer */
+.contact-btn {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px 12px 12px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.contact-btn:active { transform: scale(0.98); }
+
+.contact-btn__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.contact-btn__icon svg { width: 24px; height: 24px; }
+
+.contact-btn__text { display: grid; gap: 1px; min-width: 0; }
+.contact-btn__text strong { font-size: 1rem; font-weight: 700; }
+.contact-btn__text small {
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+  opacity: 0.75;
+}
+
+.contact-btn__arrow { font-size: 1.3rem; font-weight: 700; }
+
+.contact-btn--whatsapp { background: var(--whatsapp); border-color: var(--whatsapp); color: #06210F; }
+.contact-btn--whatsapp .contact-btn__icon { background: #06210F; color: var(--whatsapp); }
+
+.contact-btn--instagram .contact-btn__icon {
+  background: linear-gradient(45deg, #FEDA75, #FA7E1E 30%, #D62976 60%, #962FBF 80%, #4F5BD5);
+  color: #fff;
+}
+
+@media (hover: hover) {
+  .contact-btn--whatsapp:hover { background: #3BE07A; }
+  .contact-btn--instagram:hover { background: var(--bg-raised-2); }
 }
 
 .footer-bottom {

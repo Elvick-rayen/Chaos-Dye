@@ -23,7 +23,7 @@ Chaos-Dye/
 │   ├── main.js               → logic for the Shop page (product grid, product sheet)
 │   └── customize.js            → logic for the Customize page (steps, live preview, ordering)
 └── assets/
-    ├── logo/               → brand logo (logo.svg)
+    ├── logo/               → brand logo (logo.png) + apple-touch-icon.png
     ├── products/            → images for available shirts (placeholders included)
     └── designs/               → reference images for Spiral/Scrunch/Symmetrical
 ```

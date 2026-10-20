@@ -50,7 +50,7 @@ function renderBrandChrome() {
   toggleRow("[data-instagram-row]", BUSINESS.instagramUrl, row => {
     const link = row.querySelector("a");
     link.href = BUSINESS.instagramUrl;
-    row.querySelector("[data-instagram-handle]").textContent = BUSINESS.instagramHandle || "Instagram";
+    row.querySelector("[data-instagram-handle]").textContent = BUSINESS.instagramHandle || BUSINESS.instagramUrl;
   });
   toggleRow("[data-email-row]", BUSINESS.email, row => {
     const link = row.querySelector("a");

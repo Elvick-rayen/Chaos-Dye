@@ -12,7 +12,7 @@
 const BUSINESS = {
   name: "CHAOS DYE",
   tagline: "Dye Never Dies.",
-  logo: "assets/logo/logo.svg",          // <-- swap for your real logo file when you have one
+  logo: "assets/logo/logo.png",
 
   // WhatsApp number in international format, digits only, no + or spaces.
   // Example: Lebanon number +961 71 234 567 -> "96171234567"
@@ -21,8 +21,8 @@ const BUSINESS = {
   whatsappDisplay: "+961 71 224 334",
 
   // Leave instagramUrl "" to hide Instagram everywhere on the site.
-  instagramHandle: "",                   // e.g. "@chaosdye"
-  instagramUrl: "",                      // e.g. "https://instagram.com/chaosdye"
+  instagramHandle: "@chaos.dye.leb",
+  instagramUrl: "https://www.instagram.com/chaos.dye.leb/",
   email: "",                             // optional, leave "" to hide
   location: "",                          // optional, e.g. "Beirut, Lebanon" — leave "" to hide
   year: new Date().getFullYear()
