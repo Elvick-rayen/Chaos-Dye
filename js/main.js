@@ -10,16 +10,16 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ---------------------------------------------------------
-   Floating WhatsApp button — hidden while the hero buttons are
-   visible so it doesn't sit on top of them on phones.
+   Floating WhatsApp button — hidden while the hero text and buttons
+   are visible so it doesn't sit on top of them on phones.
 --------------------------------------------------------- */
 function setupFloatingWhatsApp() {
   const btn = document.querySelector(".floating-whatsapp");
-  const heroActions = document.querySelector(".hero__actions");
-  if (!btn || !heroActions || !("IntersectionObserver" in window)) return;
+  const heroCopy = document.querySelector(".hero__copy");
+  if (!btn || !heroCopy || !("IntersectionObserver" in window)) return;
   new IntersectionObserver(([entry]) => {
     btn.classList.toggle("is-tucked", entry.isIntersecting);
-  }).observe(heroActions);
+  }, { rootMargin: "0px 0px -80px 0px" }).observe(heroCopy);
 }
 
 /* ---------------------------------------------------------
@@ -68,7 +68,7 @@ function productCardHTML(product) {
           <span class="product-card__price">${formatPrice(product)}</span>
         </div>
         ${product.description ? `<p class="product-card__desc">${escapeHTML(product.description)}</p>` : ""}
-        <p class="product-card__size">Size ${escapeHTML(product.size)}</p>
+        <p class="product-card__size">Size ${escapeHTML(product.size)} · 100% cotton</p>
         ${orderButton}
       </div>
     </article>
