@@ -10,18 +10,21 @@
    Change your brand name, logo, phone number and socials here.
 --------------------------------------------------------- */
 const BUSINESS = {
-  name: "CHAOS DYE",                 // <-- replace with your real brand name
+  name: "CHAOS DYE",
   tagline: "Dye Never Dies.",
-  logo: "assets/logo/logo-placeholder.svg", // <-- replace with your real logo file
+  logo: "assets/logo/logo.svg",          // <-- swap for your real logo file when you have one
 
   // WhatsApp number in international format, digits only, no + or spaces.
   // Example: Lebanon number +961 71 234 567 -> "96171234567"
-  whatsappNumber: "96171224334",         // <-- CHANGE THIS TO YOUR REAL NUMBER
+  whatsappNumber: "96171224334",
+  // How the number is shown to visitors (purely visual).
+  whatsappDisplay: "+961 71 224 334",
 
-  instagramHandle: "@yourbrand",         // <-- replace
-  instagramUrl: "https://instagram.com/yourbrand", // <-- replace
+  // Leave instagramUrl "" to hide Instagram everywhere on the site.
+  instagramHandle: "",                   // e.g. "@chaosdye"
+  instagramUrl: "",                      // e.g. "https://instagram.com/chaosdye"
   email: "",                             // optional, leave "" to hide
-  location: "",                          // optional, leave "" to hide
+  location: "",                          // optional, e.g. "Beirut, Lebanon" — leave "" to hide
   year: new Date().getFullYear()
 };
 
@@ -36,11 +39,13 @@ const BUSINESS = {
    - size: single size string shown on the card (e.g. "M", "L")
    - description: short optional line, can be ""
    - available: true/false — set false to hide a shirt without deleting it
+   - soldOut: true to keep showing the shirt with a "Sold" badge
+     (great social proof) — ordering is disabled for it
 --------------------------------------------------------- */
 const PRODUCTS = [
   {
     id: "fire-scrunch",
-    name: "Fire Scrunch Tie-Dye",
+    name: "Fire Scrunch",
     image: "assets/products/fire-scrunch.svg",
     price: 25,
     currency: "$",
@@ -50,7 +55,7 @@ const PRODUCTS = [
   },
   {
     id: "blue-spiral",
-    name: "Blue Spiral Tie-Dye",
+    name: "Blue Spiral",
     image: "assets/products/blue-spiral.svg",
     price: 22,
     currency: "$",
@@ -60,7 +65,7 @@ const PRODUCTS = [
   },
   {
     id: "violet-symmetry",
-    name: "Violet Symmetry Tie-Dye",
+    name: "Violet Symmetry",
     image: "assets/products/violet-symmetry.svg",
     price: 24,
     currency: "$",
@@ -70,7 +75,7 @@ const PRODUCTS = [
   },
   {
     id: "emerald-scrunch",
-    name: "Emerald Scrunch Tie-Dye",
+    name: "Emerald Scrunch",
     image: "assets/products/emerald-scrunch.svg",
     price: 23,
     currency: "$",
@@ -83,25 +88,30 @@ const PRODUCTS = [
 /* ---------------------------------------------------------
    3. CUSTOM DESIGNS — Step 1 of the Customizer
    Each design needs: id, name, image, description
+   - pattern: which live preview style to draw
+     ("spiral", "scrunch" or "fold")
 --------------------------------------------------------- */
 const DESIGNS = [
   {
     id: "spiral",
     name: "Spiral",
     image: "assets/designs/spiral.jpg",
-    description: "Classic spiral tie-dye design."
+    description: "The classic swirl, radiating from one point.",
+    pattern: "spiral"
   },
   {
     id: "scrunch",
     name: "Scrunch",
     image: "assets/designs/scrunch.jpg",
-    description: "Random, crumpled cloud-style pattern."
+    description: "Wild, crumpled, cloud-like chaos.",
+    pattern: "scrunch"
   },
   {
     id: "symmetrical",
-    name: "Symmetrical / Mirror Fold",
+    name: "Mirror Fold",
     image: "assets/designs/symetrical.jpg",
-    description: "Folded technique with a mirrored pattern."
+    description: "Folded down the middle for a mirrored pattern.",
+    pattern: "fold"
   }
 ];
 
@@ -110,7 +120,7 @@ const DESIGNS = [
    Each color needs: id, name, hex (used for the swatch)
 --------------------------------------------------------- */
 const COLORS = [
-  { id: "black",     name: "Jet Black",         hex: "#1B1815" },
+  { id: "black",     name: "Jet Black",          hex: "#1B1815" },
   { id: "red",       name: "Fire Engine Red",    hex: "#E8352B" },
   { id: "yellow",    name: "Golden Yellow",      hex: "#FFB238" },
   { id: "blue",      name: "Royal Blue",         hex: "#1E3A8A" },

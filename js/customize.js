@@ -1,6 +1,10 @@
 /* ============================================================
-   CUSTOMIZE.JS — Customize Your Own page (customize.html)
+   CUSTOMIZE.JS — Design Your Own page (customize.html)
    ============================================================ */
+
+const DRAFT_KEY = "chaosdye-custom-draft";
+const LAST_STEP = 4;
+const NEXT_LABELS = { 1: "Next: Colors", 2: "Next: Size", 3: "Review order" };
 
 const state = {
   step: 1,
@@ -12,8 +16,9 @@ const state = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  renderBrandChromeShared();
-  setupFloatingWhatsAppShared();
+  restoreDraft();
+
+  document.querySelectorAll("[data-max-colors]").forEach(el => (el.textContent = MAX_COLORS));
 
   renderDesignOptions();
   renderColorOptions();
@@ -21,91 +26,86 @@ document.addEventListener("DOMContentLoaded", () => {
   setupQuantity();
   setupNotes();
   setupStepNav();
-  goToStep(1);
+  updatePreview();
+  goToStep(1, { scroll: false });
 });
 
 /* ---------------------------------------------------------
-   Shared header/footer content (duplicated intentionally so
-   this page has zero dependency on main.js)
+   Draft — remembers the visitor's picks if they leave and
+   come back (e.g. switch to WhatsApp and return).
 --------------------------------------------------------- */
-function renderBrandChromeShared() {
-  document.querySelectorAll("[data-brand-name]").forEach(el => (el.textContent = BUSINESS.name));
-  document.querySelectorAll("[data-brand-logo]").forEach(el => {
-    el.src = BUSINESS.logo;
-    el.alt = `${BUSINESS.name} logo`;
-  });
-  document.querySelectorAll("[data-brand-tagline]").forEach(el => (el.textContent = BUSINESS.tagline));
-  document.querySelectorAll("[data-year]").forEach(el => (el.textContent = BUSINESS.year));
-  document.querySelectorAll("[data-whatsapp-number]").forEach(el => (el.textContent = `+${BUSINESS.whatsappNumber}`));
-  document.querySelectorAll("[data-instagram-handle]").forEach(el => (el.textContent = BUSINESS.instagramHandle));
-  document.querySelectorAll("[data-instagram-link]").forEach(el => (el.href = BUSINESS.instagramUrl));
-  document.querySelectorAll("[data-whatsapp-footer-link]").forEach(el => {
-    el.href = buildWhatsAppLink("Hello! 👋 I have a question about your tie-dye shirts.");
-  });
+function restoreDraft() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+    if (saved) {
+      if (DESIGNS.some(d => d.id === saved.designId)) state.designId = saved.designId;
+      if (Array.isArray(saved.colorIds)) {
+        state.colorIds = saved.colorIds.filter(id => COLORS.some(c => c.id === id)).slice(0, MAX_COLORS);
+      }
+      if (SIZES.includes(saved.size)) state.size = saved.size;
+      if (Number.isInteger(saved.quantity) && saved.quantity >= 1 && saved.quantity <= 99) state.quantity = saved.quantity;
+      if (typeof saved.notes === "string") state.notes = saved.notes.slice(0, 500);
+    }
+  } catch (e) { /* storage unavailable — start fresh */ }
 
-  const emailRow = document.querySelector("[data-email-row]");
-  if (emailRow) {
-    if (BUSINESS.email) {
-      emailRow.querySelector("[data-email]").textContent = BUSINESS.email;
-      emailRow.querySelector("[data-email]").href = `mailto:${BUSINESS.email}`;
-    } else {
-      emailRow.style.display = "none";
-    }
-  }
-  const locationRow = document.querySelector("[data-location-row]");
-  if (locationRow) {
-    if (BUSINESS.location) {
-      locationRow.querySelector("[data-location]").textContent = BUSINESS.location;
-    } else {
-      locationRow.style.display = "none";
-    }
-  }
+  // A design picked from the home page (customize.html?design=spiral) wins
+  const fromUrl = new URLSearchParams(window.location.search).get("design");
+  if (DESIGNS.some(d => d.id === fromUrl)) state.designId = fromUrl;
 }
 
-function setupFloatingWhatsAppShared() {
-  const btn = document.getElementById("floating-whatsapp");
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    openWhatsApp("Hello! 👋 I have a question about your tie-dye shirts.");
-  });
+function saveDraft() {
+  try {
+    const { designId, colorIds, size, quantity, notes } = state;
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ designId, colorIds, size, quantity, notes }));
+  } catch (e) { /* ignore */ }
 }
 
 /* ---------------------------------------------------------
    Step navigation
 --------------------------------------------------------- */
 function setupStepNav() {
-  document.querySelectorAll("[data-next-step]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const current = state.step;
-      const error = validateStep(current);
-      if (error) {
-        showStepError(current, error);
-        return;
-      }
-      clearStepError(current);
-      goToStep(current + 1);
-    });
+  document.querySelector("[data-next-step]").addEventListener("click", () => {
+    const error = validateStep(state.step);
+    if (error) {
+      showStepError(state.step, error);
+      return;
+    }
+    clearStepError(state.step);
+    goToStep(state.step + 1);
   });
 
-  document.querySelectorAll("[data-prev-step]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      goToStep(state.step - 1);
-    });
+  document.querySelector("[data-prev-step]").addEventListener("click", () => {
+    if (state.step > 1) goToStep(state.step - 1);
   });
 
   document.querySelectorAll("[data-jump-step]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const target = Number(btn.getAttribute("data-jump-step"));
-      // Only allow jumping to steps already reachable (no skipping ahead unvalidated)
-      if (target < state.step || !validateStep(state.step)) {
-        goToStep(target);
+      const target = Number(btn.dataset.jumpStep);
+      // Only allow jumping ahead if every step before the target is valid
+      for (let s = 1; s < target; s++) {
+        const error = validateStep(s);
+        if (error) {
+          goToStep(s);
+          showStepError(s, error);
+          return;
+        }
       }
+      goToStep(target);
     });
+  });
+
+  document.getElementById("submit-order-btn").addEventListener("click", e => {
+    const error = validateFullOrder();
+    if (error) {
+      e.preventDefault();
+      document.getElementById("final-order-error").textContent = error;
+    }
   });
 }
 
-function goToStep(n) {
+function goToStep(n, { scroll = true } = {}) {
   state.step = n;
+
   document.querySelectorAll(".step-panel").forEach(panel => {
     panel.classList.toggle("is-active", Number(panel.dataset.step) === n);
   });
@@ -113,18 +113,46 @@ function goToStep(n) {
     const dotStep = Number(dot.dataset.step);
     dot.classList.toggle("is-active", dotStep === n);
     dot.classList.toggle("is-complete", dotStep < n);
+    if (dotStep === n) dot.setAttribute("aria-current", "step");
+    else dot.removeAttribute("aria-current");
   });
-  if (n === 4) renderReview();
-  const heading = document.querySelector(`.step-panel[data-step="${n}"] h2`);
-  if (heading) heading.setAttribute("tabindex", "-1"), heading.focus({ preventScroll: false });
-  window.scrollTo({ top: document.getElementById("customizer")?.offsetTop - 90 || 0, behavior: "smooth" });
+
+  const next = document.querySelector("[data-next-step]");
+  const submit = document.getElementById("submit-order-btn");
+  next.hidden = n === LAST_STEP;
+  next.textContent = NEXT_LABELS[n] || "";
+  submit.hidden = n !== LAST_STEP;
+  document.querySelector("[data-prev-step]").disabled = n === 1;
+
+  if (n === LAST_STEP) renderReview();
+
+  if (scroll) {
+    const heading = document.querySelector(`.step-panel[data-step="${n}"] h2`);
+    if (heading) {
+      heading.setAttribute("tabindex", "-1");
+      heading.focus({ preventScroll: true });
+    }
+    // Land just below the sticky header + progress bar
+    const layout = document.getElementById("customizer");
+    const offset = document.querySelector(".site-header").offsetHeight + document.querySelector(".progress").offsetHeight;
+    const top = layout.getBoundingClientRect().top + window.scrollY - offset;
+    if (window.scrollY > top) window.scrollTo({ top, behavior: "smooth" });
+  }
 }
 
 function validateStep(step) {
-  if (step === 1 && !state.designId) return "Please choose a design to continue.";
-  if (step === 2 && state.colorIds.length === 0) return "Please choose at least one color.";
-  if (step === 3 && !state.size) return "Please choose a size.";
-  if (step === 3 && (!Number.isInteger(state.quantity) || state.quantity < 1)) return "Please enter a valid quantity.";
+  if (step === 1 && !state.designId) return "Pick a technique to continue.";
+  if (step === 2 && state.colorIds.length === 0) return "Pick at least one color.";
+  if (step === 3 && !state.size) return "Pick a size.";
+  if (step === 3 && (!Number.isInteger(state.quantity) || state.quantity < 1)) return "Enter a valid quantity.";
+  return null;
+}
+
+function validateFullOrder() {
+  for (let s = 1; s < LAST_STEP; s++) {
+    const error = validateStep(s);
+    if (error) return error;
+  }
   return null;
 }
 
@@ -132,6 +160,7 @@ function showStepError(step, message) {
   const el = document.querySelector(`.step-panel[data-step="${step}"] [data-step-error]`);
   if (el) el.textContent = message;
 }
+
 function clearStepError(step) {
   const el = document.querySelector(`.step-panel[data-step="${step}"] [data-step-error]`);
   if (el) el.textContent = "";
@@ -145,23 +174,34 @@ function renderDesignOptions() {
   if (!wrap) return;
   wrap.innerHTML = DESIGNS.map(d => `
     <button type="button" class="design-card" data-design-id="${d.id}" aria-pressed="false">
-      <img src="${d.image}" alt="${escapeHTML(d.name)} tie-dye reference" class="design-card__image" loading="lazy">
-      <span class="design-card__name">${escapeHTML(d.name)}</span>
-      <span class="design-card__desc">${escapeHTML(d.description)}</span>
+      <img src="${d.image}" alt="" class="design-card__image" loading="lazy">
+      <span>
+        <span class="design-card__name">${escapeHTML(d.name)}</span>
+        <span class="design-card__desc">${escapeHTML(d.description)}</span>
+      </span>
+      <span class="design-card__check" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 20.6 7.4 19.2 6z"/></svg>
+      </span>
     </button>
   `).join("");
 
-  wrap.querySelectorAll("[data-design-id]").forEach(card => {
+  const cards = wrap.querySelectorAll("[data-design-id]");
+  const sync = () => cards.forEach(c => {
+    const selected = c.dataset.designId === state.designId;
+    c.classList.toggle("is-selected", selected);
+    c.setAttribute("aria-pressed", String(selected));
+  });
+
+  cards.forEach(card => {
     card.addEventListener("click", () => {
-      state.designId = card.getAttribute("data-design-id");
-      wrap.querySelectorAll("[data-design-id]").forEach(c => {
-        const selected = c === card;
-        c.classList.toggle("is-selected", selected);
-        c.setAttribute("aria-pressed", String(selected));
-      });
+      state.designId = card.dataset.designId;
+      sync();
       clearStepError(1);
+      updatePreview();
+      saveDraft();
     });
   });
+  sync();
 }
 
 /* ---------------------------------------------------------
@@ -172,9 +212,7 @@ function renderColorOptions() {
   if (!wrap) return;
   wrap.innerHTML = COLORS.map(c => `
     <button type="button" class="color-swatch" data-color-id="${c.id}" style="--swatch-color: ${c.hex}" aria-pressed="false">
-      <span class="color-swatch__circle">
-        <svg class="color-swatch__check" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 20.6 7.4 19.2 6z"/></svg>
-      </span>
+      <span class="color-swatch__circle"><span class="color-swatch__order" data-order></span></span>
       <span class="color-swatch__name">${escapeHTML(c.name)}</span>
     </button>
   `).join("");
@@ -183,37 +221,49 @@ function renderColorOptions() {
     sw.addEventListener("click", () => toggleColor(sw));
   });
 
-  renderSelectedColors();
+  syncColorSwatches();
 }
 
 function toggleColor(swatchEl) {
-  const id = swatchEl.getAttribute("data-color-id");
+  const id = swatchEl.dataset.colorId;
   const idx = state.colorIds.indexOf(id);
 
   if (idx > -1) {
     state.colorIds.splice(idx, 1);
+    clearStepError(2);
+  } else if (state.colorIds.length >= MAX_COLORS) {
+    showStepError(2, `Max ${MAX_COLORS} colors — tap one to remove it first.`);
+    swatchEl.classList.remove("is-shake");
+    void swatchEl.offsetWidth; // restart the animation
+    swatchEl.classList.add("is-shake");
+    return;
   } else {
-    if (state.colorIds.length >= MAX_COLORS) {
-      showStepError(2, `You can select up to ${MAX_COLORS} colors.`);
-      return;
-    }
     state.colorIds.push(id);
     clearStepError(2);
   }
 
-  const selected = state.colorIds.includes(id);
-  swatchEl.classList.toggle("is-selected", selected);
-  swatchEl.setAttribute("aria-pressed", String(selected));
-  renderSelectedColors();
+  syncColorSwatches();
+  updatePreview();
+  saveDraft();
 }
 
-function renderSelectedColors() {
-  const list = document.getElementById("selected-colors-list");
-  const empty = document.getElementById("selected-colors-empty");
-  if (!list) return;
-  const names = state.colorIds.map(id => COLORS.find(c => c.id === id)?.name).filter(Boolean);
-  list.innerHTML = names.map(n => `<li>${escapeHTML(n)}</li>`).join("");
-  if (empty) empty.style.display = names.length ? "none" : "block";
+function syncColorSwatches() {
+  document.querySelectorAll("[data-color-id]").forEach(sw => {
+    const pos = state.colorIds.indexOf(sw.dataset.colorId);
+    sw.classList.toggle("is-selected", pos > -1);
+    sw.setAttribute("aria-pressed", String(pos > -1));
+    sw.querySelector("[data-order]").textContent = pos > -1 ? pos + 1 : "";
+  });
+  const counter = document.getElementById("color-counter");
+  if (counter) counter.textContent = `${state.colorIds.length}/${MAX_COLORS}`;
+}
+
+function selectedColors() {
+  return state.colorIds.map(id => COLORS.find(c => c.id === id)).filter(Boolean);
+}
+
+function colorChipsHTML(colors) {
+  return colors.map(c => `<span class="chip"><i style="--chip-color:${c.hex}"></i>${escapeHTML(c.name)}</span>`).join("");
 }
 
 /* ---------------------------------------------------------
@@ -226,44 +276,49 @@ function renderSizeOptions() {
     <button type="button" class="size-pill" data-size="${s}" aria-pressed="false">${s}</button>
   `).join("");
 
-  wrap.querySelectorAll("[data-size]").forEach(pill => {
+  const pills = wrap.querySelectorAll("[data-size]");
+  const sync = () => pills.forEach(p => {
+    const selected = p.dataset.size === state.size;
+    p.classList.toggle("is-selected", selected);
+    p.setAttribute("aria-pressed", String(selected));
+  });
+
+  pills.forEach(pill => {
     pill.addEventListener("click", () => {
-      state.size = pill.getAttribute("data-size");
-      wrap.querySelectorAll("[data-size]").forEach(p => {
-        const selected = p === pill;
-        p.classList.toggle("is-selected", selected);
-        p.setAttribute("aria-pressed", String(selected));
-      });
+      state.size = pill.dataset.size;
+      sync();
       clearStepError(3);
+      saveDraft();
     });
   });
+  sync();
 }
 
 function setupQuantity() {
   const input = document.getElementById("quantity-input");
-  const minus = document.getElementById("quantity-minus");
-  const plus = document.getElementById("quantity-plus");
   if (!input) return;
 
   input.value = state.quantity;
 
   function setQty(n) {
-    n = Math.max(1, Math.min(99, Math.floor(n) || 1));
-    state.quantity = n;
-    input.value = n;
+    state.quantity = Math.max(1, Math.min(99, Math.floor(n) || 1));
+    input.value = state.quantity;
     clearStepError(3);
+    saveDraft();
   }
 
-  minus.addEventListener("click", () => setQty(state.quantity - 1));
-  plus.addEventListener("click", () => setQty(state.quantity + 1));
+  document.getElementById("quantity-minus").addEventListener("click", () => setQty(state.quantity - 1));
+  document.getElementById("quantity-plus").addEventListener("click", () => setQty(state.quantity + 1));
   input.addEventListener("change", () => setQty(Number(input.value)));
 }
 
 function setupNotes() {
   const textarea = document.getElementById("notes-input");
   if (!textarea) return;
+  textarea.value = state.notes;
   textarea.addEventListener("input", () => {
     state.notes = textarea.value.trim();
+    saveDraft();
   });
 }
 
@@ -272,63 +327,38 @@ function setupNotes() {
 --------------------------------------------------------- */
 function renderReview() {
   const design = DESIGNS.find(d => d.id === state.designId);
-  const colorNames = state.colorIds.map(id => COLORS.find(c => c.id === id)?.name).filter(Boolean);
 
   setText("review-design", design ? design.name : "—");
   const reviewImg = document.getElementById("review-design-image");
   if (reviewImg && design) {
     reviewImg.src = design.image;
-    reviewImg.alt = design.name;
+    reviewImg.alt = `${design.name} tie-dye technique`;
   }
 
   const colorsEl = document.getElementById("review-colors");
-  if (colorsEl) colorsEl.innerHTML = colorNames.map(n => `<li>${escapeHTML(n)}</li>`).join("");
+  if (colorsEl) {
+    colorsEl.innerHTML = selectedColors()
+      .map(c => `<li class="chip"><i style="--chip-color:${c.hex}"></i>${escapeHTML(c.name)}</li>`)
+      .join("");
+  }
 
-  setText("review-size", state.size || "—");
-  setText("review-quantity", String(state.quantity));
+  setText("review-size", `Size ${state.size || "—"} · ${state.quantity} ${state.quantity === 1 ? "shirt" : "shirts"}`);
 
   const notesRow = document.getElementById("review-notes-row");
-  if (notesRow) {
-    if (state.notes) {
-      notesRow.style.display = "";
-      setText("review-notes", state.notes);
-    } else {
-      notesRow.style.display = "none";
-    }
-  }
+  notesRow.hidden = !state.notes;
+  setText("review-notes", state.notes);
 
+  const error = validateFullOrder();
   const orderBtn = document.getElementById("submit-order-btn");
-  const finalError = validateFullOrder();
-  if (orderBtn) {
-    orderBtn.disabled = Boolean(finalError);
-  }
-  const errEl = document.getElementById("final-order-error");
-  if (errEl) errEl.textContent = finalError || "";
+  orderBtn.href = error ? "#" : buildWhatsAppLink(buildCustomOrderMessage());
+  orderBtn.setAttribute("aria-disabled", String(Boolean(error)));
+  setText("final-order-error", error || "");
 
-  if (orderBtn && !orderBtn.dataset.bound) {
-    orderBtn.dataset.bound = "true";
-    orderBtn.addEventListener("click", () => {
-      const err = validateFullOrder();
-      if (err) {
-        if (errEl) errEl.textContent = err;
-        return;
-      }
-      openWhatsApp(buildCustomOrderMessage());
-    });
-  }
-}
-
-function validateFullOrder() {
-  if (!state.designId) return "Please choose a design.";
-  if (state.colorIds.length === 0) return "Please choose at least one color.";
-  if (!state.size) return "Please choose a size.";
-  if (!Number.isInteger(state.quantity) || state.quantity < 1) return "Please choose a valid quantity.";
-  return null;
+  updatePreview();
 }
 
 function buildCustomOrderMessage() {
   const design = DESIGNS.find(d => d.id === state.designId);
-  const colorNames = state.colorIds.map(id => COLORS.find(c => c.id === id)?.name).filter(Boolean);
 
   const lines = [
     "Hello! 👋",
@@ -338,15 +368,14 @@ function buildCustomOrderMessage() {
     `🎨 Design: ${design ? design.name : "-"}`,
     "",
     "🌈 Colors:",
-    ...colorNames.map(n => `- ${n}`),
+    ...selectedColors().map((c, i) => `${i + 1}. ${c.name}`),
     "",
     `👕 Size: ${state.size}`,
-    "",
     `📦 Quantity: ${state.quantity}`
   ];
 
   if (state.notes) {
-    lines.push("", "📝 Special Instructions:", state.notes);
+    lines.push("", "📝 Special requests:", state.notes);
   }
 
   lines.push("", "Please let me know the price and when it can be ready.");
@@ -355,15 +384,119 @@ function buildCustomOrderMessage() {
 }
 
 /* ---------------------------------------------------------
+   Live dye preview
+   Draws an approximation of the chosen technique in the chosen
+   colors onto every <canvas data-dye-preview>.
+--------------------------------------------------------- */
+function updatePreview() {
+  const design = DESIGNS.find(d => d.id === state.designId);
+  const colors = selectedColors();
+
+  document.querySelectorAll("[data-preview-design]").forEach(el => {
+    el.textContent = design ? design.name : "Pick a technique";
+  });
+  document.querySelectorAll("[data-preview-colors]").forEach(el => {
+    el.innerHTML = colors.length
+      ? colorChipsHTML(colors)
+      : `<span class="chip chip--empty">Tap colors below</span>`;
+  });
+
+  const hexes = colors.length ? colors.map(c => c.hex) : ["#3A3430", "#6E655C"];
+  const pattern = design ? design.pattern : "spiral";
+  document.querySelectorAll("[data-dye-preview]").forEach(canvas => drawDye(canvas, pattern, hexes));
+}
+
+function drawDye(canvas, pattern, hexes) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const size = canvas.width;
+  const img = ctx.createImageData(size, size);
+  const data = img.data;
+
+  const palette = hexes.map(hexToRgb);
+  const n = palette.length;
+  // Earlier colors get a bigger share of the shirt
+  const weights = palette.map((_, i) => 1 + (n - 1 - i) * 0.3);
+  const total = weights.reduce((a, b) => a + b, 0);
+  const stops = [];
+  weights.reduce((acc, w) => (stops.push((acc + w) / total), acc + w), 0);
+
+  for (let py = 0; py < size; py++) {
+    for (let px = 0; px < size; px++) {
+      const x = px / size - 0.5;
+      const y = py / size - 0.5;
+      const r = Math.hypot(x, y);
+      const grain = fbm(px / size * 7, py / size * 7);
+      let t;
+
+      if (pattern === "scrunch") {
+        t = fbm(px / size * 3.2 + 10, py / size * 3.2 + 4) * 2.4 + grain * 0.3;
+      } else if (pattern === "fold") {
+        t = Math.abs(x) * 2.6 - y * 1.7 + grain * 0.35;
+      } else {
+        const angle = Math.atan2(y, x) / (Math.PI * 2);
+        t = angle + r * 2.4 + grain * 0.18;
+      }
+      t = ((t % 1) + 1) % 1;
+
+      // Pick the band this t falls in, and blend into the next one near the edge
+      let i = 0;
+      while (i < n - 1 && t > stops[i]) i++;
+      const start = i === 0 ? 0 : stops[i - 1];
+      const local = (t - start) / (stops[i] - start);
+      const edge = smoothstep(0.75, 1, local);
+      const a = palette[i];
+      const b = palette[(i + 1) % n];
+
+      // Crinkles of undyed white where the fabric was folded tight
+      const crinkle = n === 1
+        ? 0.15 + smoothstep(0.45, 0.75, fbm(px / size * 9 + 3, py / size * 9)) * 0.55
+        : smoothstep(0.62, 0.85, fbm(px / size * 14 + 7, py / size * 14 + 2)) * 0.6;
+
+      const o = (py * size + px) * 4;
+      for (let c = 0; c < 3; c++) {
+        const mixed = a[c] + (b[c] - a[c]) * edge;
+        data[o + c] = mixed + (244 - mixed) * crinkle;
+      }
+      data[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function hexToRgb(hex) {
+  const v = parseInt(hex.replace("#", ""), 16);
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+}
+
+function smoothstep(a, b, x) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+
+// Small deterministic value-noise, so the preview looks the same every time
+function hash(x, y) {
+  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+function noise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const top = hash(xi, yi) + (hash(xi + 1, yi) - hash(xi, yi)) * u;
+  const bottom = hash(xi, yi + 1) + (hash(xi + 1, yi + 1) - hash(xi, yi + 1)) * u;
+  return top + (bottom - top) * v;
+}
+
+function fbm(x, y) {
+  return noise(x, y) * 0.55 + noise(x * 2.1, y * 2.1) * 0.3 + noise(x * 4.3, y * 4.3) * 0.15;
+}
+
+/* ---------------------------------------------------------
    Utilities
 --------------------------------------------------------- */
 function setText(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text;
-}
-
-function escapeHTML(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
 }
