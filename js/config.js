@@ -44,43 +44,53 @@ const BUSINESS = {
 --------------------------------------------------------- */
 const PRODUCTS = [
   {
-    id: "fire-scrunch",
-    name: "Fire Scrunch",
-    image: "assets/products/fire-scrunch.svg",
+    id: "blue-fire",
+    name: "Blue Fire",
+    image: "assets/products/bluefire.jpeg",
     price: 25,
     currency: "$",
     size: "L",
-    description: "Crumpled cloud pattern in red, orange and gold.",
+    description: "",
     available: true
   },
   {
-    id: "blue-spiral",
-    name: "Blue Spiral",
-    image: "assets/products/blue-spiral.svg",
-    price: 22,
+    id: "galactic-storm",
+    name: "Galactic Storm",
+    image: "assets/products/galacticstorm.jpeg",
+    price: 25,
     currency: "$",
-    size: "M",
-    description: "Classic spiral wash in ocean blues.",
+    size: "L",
+    description: "",
     available: true
   },
   {
-    id: "violet-symmetry",
-    name: "Violet Symmetry",
-    image: "assets/products/violet-symmetry.svg",
-    price: 24,
+    id: "party-soldier",
+    name: "Party Soldier",
+    image: "assets/products/partysoldier.jpeg",
+    price: 25,
     currency: "$",
-    size: "S",
-    description: "Mirror-folded pattern in violet and magenta.",
+    size: "L",
+    description: "",
     available: true
   },
   {
-    id: "emerald-scrunch",
-    name: "Emerald Scrunch",
-    image: "assets/products/emerald-scrunch.svg",
-    price: 23,
+    id: "pumpkin-abomination",
+    name: "Pumpkin Abomination",
+    image: "assets/products/pumpkin.jpeg",
+    price: 25,
     currency: "$",
-    size: "XL",
-    description: "Deep green and teal scrunch wash.",
+    size: "L",
+    description: "",
+    available: true
+  },
+  {
+    id: "the-psychedelic",
+    name: "The Psychedelic",
+    image: "assets/products/thepsych.jpeg",
+    price: 25,
+    currency: "$",
+    size: "L",
+    description: "",
     available: true
   }
 ];
